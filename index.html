@@ -257,11 +257,11 @@
       }
     }
 
-    function parseSpeechText(text) {
+function parseSpeechText(text) {
       const normalized = normalizeText(text);
 
-      // 【修正箇所】句読点を分割に使うのではなく、スペースに置換して結合を維持する
-      const textWithoutPunctuation = normalized.replace(/[。、！？.,]/g, ' ');
+      // 【修正】ピリオド(.)を消してしまうと小数が壊れるため外す。日本語の句読点のみスペースに置換。
+      const textWithoutPunctuation = normalized.replace(/[。、！？]/g, ' ');
 
       // 「◯番」の前でのみ意図的に改行して分割する
       let rawChunks = textWithoutPunctuation
@@ -323,8 +323,12 @@
       return str
         .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
         .replace(/[Ａ-Ｚａ-ｚ]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
-        .replace(/センチメートル|センチ|cm|ミリメートル|ミリ|mm/gi, '')
-        .replace(/キログラム|キロ|グラム|g|kg/gi, '')
+        .replace(/．/g, '.')
+        .replace(/点/g, '.') // 音声入力の「13点5」を「13.5」にする対応
+        // 【超重要修正】単位を消すのではなく、半角スペース(' ')に置換する！
+        // これによりスマホの「13センチ36グラム」が「1336」にならず「13 36」と正しく分かれます。
+        .replace(/センチメートル|センチ|cm|ミリメートル|ミリ|mm/gi, ' ')
+        .replace(/キログラム|キロ|グラム|g|kg/gi, ' ')
         .replace(/\s+/g, ' ')
         .trim();
     }
